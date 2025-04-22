@@ -1,10 +1,11 @@
-﻿using System;
+﻿using SiraUtil.Affinity;
+using System;
 using UnityEngine;
 using Zenject;
 
 namespace SoundReplacer.Patches
 {
-    internal class CutSoundPatch : IInitializable, IDisposable
+    internal class CutSoundPatch : IInitializable, IDisposable, IAffinity
     {
         private readonly NoteCutSoundEffectManager _noteCutSoundEffectManager;
         private readonly SoundLoader _soundLoader;
@@ -47,6 +48,17 @@ namespace SoundReplacer.Patches
         public void Dispose()
         {
             _soundLoader.Unload(SoundType.Cut);
+        }
+
+
+        [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.ComputeDSPTimes))]
+        [AffinityPrefix]
+        private void TryFixingPitch(NoteCutSoundEffect __instance)
+        {
+            if (_config.PitchLock)
+            {
+                __instance._pitch = 1f;
+            }
         }
     }
 }

@@ -103,5 +103,12 @@ namespace SoundReplacer.UI
             get => _config.LevelFailedSound;
             set => _config.LevelFailedSound = value;
         }
+
+        [UIValue("lock-pitch")]
+        protected bool IsPitchLocked
+        {
+            get => _config.PitchLock;
+            set => _config.PitchLock = value;
+        }
     }
 }

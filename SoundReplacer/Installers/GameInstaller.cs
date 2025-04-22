@@ -7,7 +7,7 @@ namespace SoundReplacer.Installers
     {
         public override void InstallBindings()
         {
-            Container.BindInterfacesTo<CutSoundPatch>().AsSingle();
+            Container.BindInterfacesTo<CutSoundPatch>().AsSingle().NonLazy();
         }
     }
 }

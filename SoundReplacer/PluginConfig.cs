@@ -12,5 +12,6 @@ namespace SoundReplacer
         public string ClickSound { get; set; } = SoundLoader.DefaultSoundID;
         public string LevelClearedSound { get; set; } = SoundLoader.DefaultSoundID;
         public string LevelFailedSound { get; set; } = SoundLoader.DefaultSoundID;
+        public bool PitchLock { get; set; } = false;
     }
 }

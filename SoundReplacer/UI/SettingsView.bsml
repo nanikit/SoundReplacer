@@ -6,5 +6,6 @@
     <dropdown-list-setting options="sound-list" value="click-sound" text="Click sound" apply-on-change="true" />
     <dropdown-list-setting options="sound-list" value="success-sound" text="Level success" apply-on-change="true" />
     <dropdown-list-setting options="sound-list" value="fail-sound" text="Level fail" apply-on-change="true" />
+    <checkbox-setting value="lock-pitch" text="Lock pitch" apply-on-change="true" bind-value="true" />
   </vertical>
 </bg>
