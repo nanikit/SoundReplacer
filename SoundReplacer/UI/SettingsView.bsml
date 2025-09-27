@@ -7,5 +7,7 @@
     <dropdown-list-setting options="sound-list" value="success-sound" text="Level success" apply-on-change="true" />
     <dropdown-list-setting options="sound-list" value="fail-sound" text="Level fail" apply-on-change="true" />
     <checkbox-setting value="lock-pitch" text="Lock pitch" apply-on-change="true" bind-value="true" />
+    <slider-setting text="Music decibel offset" min="-10" max="10" value="music-decibel-offset" increment="0.5" apply-on-change="true" bind-value="true" />
+    <slider-setting text="Sfx decibel offset" min="0" max="20" value="sfx-decibel-offset" increment="0.5" apply-on-change="true" bind-value="true" />
   </vertical>
 </bg>

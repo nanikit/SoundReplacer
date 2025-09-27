@@ -1,27 +1,39 @@
 ﻿using System;
 using SiraUtil.Affinity;
+using SiraUtil.Logging;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace SoundReplacer.Patches
 {
-    internal class BadCutSoundPatch : IAffinity, IDisposable
+    internal class BadCutSoundAndMusicPatch : IAffinity, IDisposable
     {
         private readonly SoundLoader _soundLoader;
         private readonly PluginConfig _config;
+        private readonly SiraLog _logger;
 
         private readonly AudioClip[] _badCutSounds = new AudioClip[1];
         private AudioClip[]? _originalBadCutSounds;
 
-        private BadCutSoundPatch(SoundLoader soundLoader, PluginConfig config)
+        private BadCutSoundAndMusicPatch(SoundLoader soundLoader, PluginConfig config, SiraLog logger)
         {
             _soundLoader = soundLoader;
             _config = config;
+            _logger = logger;
         }
 
         public void Dispose()
         {
             _soundLoader.Unload(SoundType.BadCut);
+        }
+
+        [AffinityPatch(typeof(AudioManagerSO), nameof(AudioManagerSO.musicVolume), AffinityMethodType.Setter)]
+        [AffinityPrefix]
+        private void SetMusicVolume(ref float value)
+        {
+            // value is -5dBFS on custom level, and final value is -7dBFS
+            value += _config.MusicDecibelOffset;
+            // _logger.Trace($"musicVolume: {value - 2f}");
         }
 
         [AffinityPatch(typeof(EffectPoolsManualInstaller), nameof(EffectPoolsManualInstaller.ManualInstallBindings))]

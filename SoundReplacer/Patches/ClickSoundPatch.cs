@@ -1,26 +1,43 @@
 ﻿using System;
 using SiraUtil.Affinity;
 using UnityEngine;
+using Zenject;
 
 namespace SoundReplacer.Patches
 {
-    internal class ClickSoundPatch : IAffinity, IDisposable
+    internal class ClickSoundPatch : IInitializable, IAffinity, IDisposable
     {
         private readonly SoundLoader _soundLoader;
         private readonly PluginConfig _config;
+        private readonly BasicUIAudioManager _basicUIAudioManager;
 
         private readonly AudioClip[] _clickSounds = new AudioClip[1];
         private AudioClip[]? _originalClickSounds;
 
-        private ClickSoundPatch(SoundLoader soundLoader, PluginConfig config)
+        public ClickSoundPatch(SoundLoader soundLoader, PluginConfig config, BasicUIAudioManager basicUIAudioManager)
         {
             _soundLoader = soundLoader;
             _config = config;
+            _basicUIAudioManager = basicUIAudioManager;
+        }
+
+        public void Initialize()
+        {
+            _config.OnChanged += AdjustClickSoundVolume;
+            AdjustClickSoundVolume();
         }
 
         public void Dispose()
         {
             _soundLoader.Unload(SoundType.Click);
+            _config.OnChanged -= AdjustClickSoundVolume;
+        }
+
+        private void AdjustClickSoundVolume()
+        {
+            float oldVolume = _basicUIAudioManager._audioSource.volume;
+            float newVolume = oldVolume - _config.MusicDecibelOffset;
+            _basicUIAudioManager._audioSource.volume = Math.Clamp(newVolume, 0f, 1f);
         }
 
         [AffinityPatch(typeof(BasicUIAudioManager), nameof(BasicUIAudioManager.Start))]

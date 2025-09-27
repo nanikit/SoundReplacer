@@ -50,6 +50,14 @@ namespace SoundReplacer.Patches
             _soundLoader.Unload(SoundType.Cut);
         }
 
+        [AffinityPatch(typeof(AdaptiveSfxVolume), nameof(AdaptiveSfxVolume.ApplyLoudness))]
+        [AffinityPrefix]
+        private void UpdateAdaptiveSfxVolume(ref float songLoudness)
+        {
+            // songLoudness maximum: 0dBFS
+            float intrinsicOffset = 10f;
+            songLoudness += _config.SfxDecibelOffset - intrinsicOffset;
+        }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.ComputeDSPTimes))]
         [AffinityPrefix]

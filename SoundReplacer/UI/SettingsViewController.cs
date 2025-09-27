@@ -71,8 +71,7 @@ namespace SoundReplacer.UI
         protected string SettingCurrentMenuMusic
         {
             get => _config.MenuMusic;
-            set
-            {
+            set {
                 _config.MenuMusic = value;
                 _songPreviewPlayer.Start();
                 _songPreviewPlayer.CrossfadeToDefault();
@@ -83,8 +82,7 @@ namespace SoundReplacer.UI
         protected string SettingCurrentClickSound
         {
             get => _config.ClickSound;
-            set
-            {
+            set {
                 _config.ClickSound = value;
                 _basicUIAudioManager.Start();
             }
@@ -109,6 +107,20 @@ namespace SoundReplacer.UI
         {
             get => _config.PitchLock;
             set => _config.PitchLock = value;
+        }
+
+        [UIValue("music-decibel-offset")]
+        protected float MusicDecibelOffset
+        {
+            get => _config.MusicDecibelOffset;
+            set => _config.MusicDecibelOffset = value;
+        }
+
+        [UIValue("sfx-decibel-offset")]
+        protected float SfxDecibelOffset
+        {
+            get => _config.SfxDecibelOffset;
+            set => _config.SfxDecibelOffset = value;
         }
     }
 }
