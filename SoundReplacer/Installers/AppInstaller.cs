@@ -17,6 +17,7 @@ namespace SoundReplacer.Installers
             Container.BindInstance(_config).AsSingle();
             Container.BindInterfacesAndSelfTo<SoundLoader>().AsSingle();
             Container.BindInterfacesTo<BadCutSoundAndMusicPatch>().AsSingle();
+            Container.BindInterfacesTo<BombCutSoundPatch>().AsSingle();
         }
     }
 }

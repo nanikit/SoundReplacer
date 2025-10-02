@@ -12,7 +12,7 @@ namespace SoundReplacer
     {
         public const string NoSoundID = "None";
         public const string DefaultSoundID = "Default";
-        public static readonly string[] DefaultSounds = { NoSoundID, DefaultSoundID };
+        public static readonly string[] DefaultSounds = [NoSoundID, DefaultSoundID];
         // Duration of 1 second as NoteCutSoundEffect could disable itself before the note is cut otherwise.
         public static readonly AudioClip Empty = AudioClip.Create("Empty", 44100, 1, 44100, false);
 
@@ -71,10 +71,10 @@ namespace SoundReplacer
 
         private string GetSoundFileName(SoundType soundType)
         {
-            return soundType switch
-            {
+            return soundType switch {
                 SoundType.Cut => _config.CutSound,
                 SoundType.BadCut => _config.BadCutSound,
+                SoundType.BombCut => _config.BombCutSound,
                 SoundType.Menu => _config.MenuMusic,
                 SoundType.Click => _config.ClickSound,
                 SoundType.LevelCleared => _config.LevelClearedSound,

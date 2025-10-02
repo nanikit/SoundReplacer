@@ -67,6 +67,13 @@ namespace SoundReplacer.UI
             set => _config.BadCutSound = value;
         }
 
+        [UIValue("bomb-hitsound")]
+        protected string SettingCurrentBombHitSound
+        {
+            get => _config.BombCutSound;
+            set => _config.BombCutSound = value;
+        }
+
         [UIValue("menu-music")]
         protected string SettingCurrentMenuMusic
         {

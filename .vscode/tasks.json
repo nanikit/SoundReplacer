@@ -18,6 +18,23 @@
         "isDefault": true
       },
       "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "Debug Build",
+      "type": "shell",
+      "command": "dotnet",
+      "args": [
+        "build",
+        "SoundReplacer.sln",
+        "-v",
+        "d",
+        "/p:Configuration=Debug",
+        "/p:Platform=Any CPU"
+      ],
+      "group": {
+        "kind": "build"
+      },
+      "problemMatcher": "$msCompile"
     }
   ]
 }

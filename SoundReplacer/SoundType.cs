@@ -4,6 +4,7 @@
     {
         Cut,
         BadCut,
+        BombCut,
         Menu,
         Click,
         LevelCleared,

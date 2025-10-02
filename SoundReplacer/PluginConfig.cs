@@ -11,6 +11,7 @@ namespace SoundReplacer
 
         public string CutSound { get; set; } = SoundLoader.DefaultSoundID;
         public string BadCutSound { get; set; } = SoundLoader.DefaultSoundID;
+        public string BombCutSound { get; set; } = SoundLoader.DefaultSoundID;
         public string MenuMusic { get; set; } = SoundLoader.DefaultSoundID;
         public string ClickSound { get; set; } = SoundLoader.DefaultSoundID;
         public string LevelClearedSound { get; set; } = SoundLoader.DefaultSoundID;
