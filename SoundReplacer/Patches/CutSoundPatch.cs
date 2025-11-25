@@ -1,4 +1,5 @@
 ﻿using SiraUtil.Affinity;
+using SiraUtil.Logging;
 using System;
 using UnityEngine;
 using Zenject;
@@ -10,16 +11,20 @@ namespace SoundReplacer.Patches
         private readonly NoteCutSoundEffectManager _noteCutSoundEffectManager;
         private readonly SoundLoader _soundLoader;
         private readonly PluginConfig _config;
+        private readonly SiraLog _logger;
 
         private readonly AudioClip[] _cutSounds = new AudioClip[1];
         private readonly AudioClip[] _originalLongCutSounds;
         private readonly AudioClip[] _originalShortCutSounds;
 
-        private CutSoundPatch(NoteCutSoundEffectManager noteCutSoundEffectManager, SoundLoader soundLoader, PluginConfig config)
+        private float _momentaryVolume = 1f;
+
+        private CutSoundPatch(NoteCutSoundEffectManager noteCutSoundEffectManager, SoundLoader soundLoader, PluginConfig config, SiraLog logger)
         {
             _noteCutSoundEffectManager = noteCutSoundEffectManager;
             _soundLoader = soundLoader;
             _config = config;
+            _logger = logger;
             _originalShortCutSounds = noteCutSoundEffectManager._shortCutEffectsAudioClips;
             _originalLongCutSounds = noteCutSoundEffectManager._longCutEffectsAudioClips;
         }
@@ -57,12 +62,31 @@ namespace SoundReplacer.Patches
             // songLoudness maximum: 0dBFS
             float intrinsicOffset = 10f;
             songLoudness += _config.SfxDecibelOffset - intrinsicOffset;
+            _momentaryVolume = ReplacerAudioHelpers.DBToNormalizedVolume(songLoudness);
+        }
+
+        [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.NoteWasCut))]
+        [AffinityPrefix]
+        private void AdjustCutSoundVolume(NoteCutSoundEffect __instance, NoteController noteController)
+        {
+            if (__instance._noteController == noteController) {
+                __instance._audioSource.volume = _momentaryVolume;
+            }
+        }
+
+        [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.OnLateUpdate))]
+        [AffinityPrefix]
+        private void AdjustCutSoundVolumeOnUpdate(NoteCutSoundEffect __instance)
+        {
+            __instance._audioSource.volume = _momentaryVolume;
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.ComputeDSPTimes))]
         [AffinityPrefix]
         private void TryFixingPitch(NoteCutSoundEffect __instance)
         {
+            __instance._audioSource.outputAudioMixerGroup = null;
+            __instance._audioSource.volume = _momentaryVolume;
             if (_config.PitchLock)
             {
                 __instance._pitch = 1f;
