@@ -1,4 +1,5 @@
-﻿using SiraUtil.Affinity;
+﻿using IPA.Utilities;
+using SiraUtil.Affinity;
 using SiraUtil.Logging;
 using System;
 using UnityEngine;
@@ -55,18 +56,25 @@ namespace SoundReplacer.Patches
             _soundLoader.Unload(SoundType.Cut);
         }
 
+        [AffinityPatch(typeof(AdaptiveSfxVolume), nameof(AdaptiveSfxVolume.Start))]
+        [AffinityPrefix]
+        private void GiveMeUntouchedLufs(AdaptiveSfxVolume __instance)
+        {
+            FieldAccessor<AdaptiveSfxVolume, float>.Set(__instance, nameof(AdaptiveSfxVolume._minThreshold), float.MinValue);
+        }
+
         [AffinityPatch(typeof(AdaptiveSfxVolume), nameof(AdaptiveSfxVolume.ApplyLoudness))]
         [AffinityPrefix]
         private void UpdateAdaptiveSfxVolume(ref float songLoudness)
         {
             // songLoudness maximum: 0dBFS
             float intrinsicOffset = 10f;
-            songLoudness += _config.SfxDecibelOffset - intrinsicOffset;
+            songLoudness = Mathf.Max(-40f, songLoudness + _config.SfxDecibelOffset + _config.MusicDecibelOffset - intrinsicOffset);
             _momentaryVolume = ReplacerAudioHelpers.DBToNormalizedVolume(songLoudness);
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.NoteWasCut))]
-        [AffinityPrefix]
+        [AffinityPostfix]
         private void AdjustCutSoundVolume(NoteCutSoundEffect __instance, NoteController noteController)
         {
             if (__instance._noteController == noteController) {
@@ -75,7 +83,7 @@ namespace SoundReplacer.Patches
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.OnLateUpdate))]
-        [AffinityPrefix]
+        [AffinityPostfix]
         private void AdjustCutSoundVolumeOnUpdate(NoteCutSoundEffect __instance)
         {
             __instance._audioSource.volume = _momentaryVolume;
