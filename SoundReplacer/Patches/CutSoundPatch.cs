@@ -77,16 +77,18 @@ namespace SoundReplacer.Patches
         [AffinityPostfix]
         private void AdjustCutSoundVolume(NoteCutSoundEffect __instance, NoteController noteController)
         {
-            if (__instance._noteController == noteController) {
+            if (__instance._noteController == noteController)
+            {
                 __instance._audioSource.volume = _momentaryVolume;
             }
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.OnLateUpdate))]
-        [AffinityPostfix]
+        [AffinityPrefix]
         private void AdjustCutSoundVolumeOnUpdate(NoteCutSoundEffect __instance)
         {
-            __instance._audioSource.volume = _momentaryVolume;
+            __instance._badCutVolume = _momentaryVolume;
+            __instance._goodCutVolume = _momentaryVolume;
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.ComputeDSPTimes))]
