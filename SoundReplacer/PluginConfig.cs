@@ -19,6 +19,7 @@ namespace SoundReplacer
         public bool PitchLock { get; set; } = false;
         public float MusicDecibelOffset { get; set; } = 0f;
         public float SfxDecibelOffset { get; set; } = 0f;
+        public float SfxDecibelMultiplier { get; set; } = 1f;
 
 
         /// <summary>

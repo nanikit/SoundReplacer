@@ -123,6 +123,13 @@ namespace SoundReplacer.UI
             set => _config.MusicDecibelOffset = value;
         }
 
+        [UIValue("sfx-decibel-multiplier")]
+        protected float SfxDecibelMultiplier
+        {
+            get => _config.SfxDecibelMultiplier;
+            set => _config.SfxDecibelMultiplier = value;
+        }
+
         [UIValue("sfx-decibel-offset")]
         protected float SfxDecibelOffset
         {

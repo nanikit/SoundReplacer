@@ -69,7 +69,7 @@ namespace SoundReplacer.Patches
         {
             // songLoudness maximum: 0dBFS
             float intrinsicOffset = 10f;
-            songLoudness = Mathf.Max(-40f, songLoudness + _config.SfxDecibelOffset + _config.MusicDecibelOffset - intrinsicOffset);
+            songLoudness = Mathf.Max(-40f, songLoudness * _config.SfxDecibelMultiplier + _config.SfxDecibelOffset + _config.MusicDecibelOffset - intrinsicOffset);
             _momentaryVolume = ReplacerAudioHelpers.DBToNormalizedVolume(songLoudness);
         }
 
