@@ -9,6 +9,9 @@ namespace SoundReplacer.Patches
 {
     internal class CutSoundPatch : IInitializable, IDisposable, IAffinity
     {
+        private const float IntrinsicOffset = 10f;
+        private const float MinCutLoudnessDb = -50f;
+
         private readonly NoteCutSoundEffectManager _noteCutSoundEffectManager;
         private readonly SoundLoader _soundLoader;
         private readonly PluginConfig _config;
@@ -18,7 +21,7 @@ namespace SoundReplacer.Patches
         private readonly AudioClip[] _originalLongCutSounds;
         private readonly AudioClip[] _originalShortCutSounds;
 
-        private float _momentaryVolume = 1f;
+        private volatile float _responsiveCutVolume;
 
         private CutSoundPatch(NoteCutSoundEffectManager noteCutSoundEffectManager, SoundLoader soundLoader, PluginConfig config, SiraLog logger)
         {
@@ -63,14 +66,11 @@ namespace SoundReplacer.Patches
             FieldAccessor<AdaptiveSfxVolume, float>.Set(__instance, nameof(AdaptiveSfxVolume._minThreshold), float.MinValue);
         }
 
-        [AffinityPatch(typeof(AdaptiveSfxVolume), nameof(AdaptiveSfxVolume.ApplyLoudness))]
+        [AffinityPatch(typeof(MomentaryLoudnessHistory), nameof(MomentaryLoudnessHistory.Add))]
         [AffinityPrefix]
-        private void UpdateAdaptiveSfxVolume(ref float songLoudness)
+        private void CaptureResponsiveCutVolume(float momentaryLoudness)
         {
-            // songLoudness maximum: 0dBFS
-            float intrinsicOffset = 10f;
-            songLoudness = Mathf.Max(-40f, songLoudness * _config.SfxDecibelMultiplier + _config.SfxDecibelOffset + _config.MusicDecibelOffset - intrinsicOffset);
-            _momentaryVolume = ReplacerAudioHelpers.DBToNormalizedVolume(songLoudness);
+            _responsiveCutVolume = ToCutVolume(momentaryLoudness);
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.NoteWasCut))]
@@ -79,7 +79,7 @@ namespace SoundReplacer.Patches
         {
             if (__instance._noteController == noteController)
             {
-                __instance._audioSource.volume = _momentaryVolume;
+                __instance._audioSource.volume = GetCurrentCutVolume();
             }
         }
 
@@ -87,8 +87,9 @@ namespace SoundReplacer.Patches
         [AffinityPrefix]
         private void AdjustCutSoundVolumeOnUpdate(NoteCutSoundEffect __instance)
         {
-            __instance._badCutVolume = _momentaryVolume;
-            __instance._goodCutVolume = _momentaryVolume;
+            float cutVolume = GetCurrentCutVolume();
+            __instance._badCutVolume = cutVolume;
+            __instance._goodCutVolume = cutVolume;
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.ComputeDSPTimes))]
@@ -96,11 +97,23 @@ namespace SoundReplacer.Patches
         private void TryFixingPitch(NoteCutSoundEffect __instance)
         {
             __instance._audioSource.outputAudioMixerGroup = null;
-            __instance._audioSource.volume = _momentaryVolume;
+            __instance._audioSource.volume = GetCurrentCutVolume();
             if (_config.PitchLock)
             {
                 __instance._pitch = 1f;
             }
         }
+
+        private float GetAdjustedLoudnessDb(float loudnessDb)
+        {
+            return Mathf.Max(
+                MinCutLoudnessDb,
+                loudnessDb * _config.SfxDecibelMultiplier + _config.SfxDecibelOffset + _config.MusicDecibelOffset - IntrinsicOffset);
+        }
+
+        private float ToCutVolume(float loudnessDb)
+            => ReplacerAudioHelpers.DBToNormalizedVolume(GetAdjustedLoudnessDb(loudnessDb));
+
+        private float GetCurrentCutVolume() => _responsiveCutVolume;
     }
 }
