@@ -1,6 +1,6 @@
 ﻿using IPA.Utilities;
 using SiraUtil.Affinity;
-using SiraUtil.Logging;
+using SoundReplacer.Helpers;
 using System;
 using UnityEngine;
 using Zenject;
@@ -9,26 +9,25 @@ namespace SoundReplacer.Patches
 {
     internal class CutSoundPatch : IInitializable, IDisposable, IAffinity
     {
-        private const float IntrinsicOffset = 10f;
-        private const float MinCutLoudnessDb = -50f;
+        private const float MinCutLoudnessDb = -30f;
 
         private readonly NoteCutSoundEffectManager _noteCutSoundEffectManager;
         private readonly SoundLoader _soundLoader;
         private readonly PluginConfig _config;
-        private readonly SiraLog _logger;
 
         private readonly AudioClip[] _cutSounds = new AudioClip[1];
         private readonly AudioClip[] _originalLongCutSounds;
         private readonly AudioClip[] _originalShortCutSounds;
+        private readonly PeakPercentileHistogram _peakPercentileHistogram = new(128, 0.95f);
 
-        private volatile float _responsiveCutVolume;
+        private volatile float _momentaryCutVolume;
+        private volatile float _peakCutVolume;
 
-        private CutSoundPatch(NoteCutSoundEffectManager noteCutSoundEffectManager, SoundLoader soundLoader, PluginConfig config, SiraLog logger)
+        private CutSoundPatch(NoteCutSoundEffectManager noteCutSoundEffectManager, SoundLoader soundLoader, PluginConfig config)
         {
             _noteCutSoundEffectManager = noteCutSoundEffectManager;
             _soundLoader = soundLoader;
             _config = config;
-            _logger = logger;
             _originalShortCutSounds = noteCutSoundEffectManager._shortCutEffectsAudioClips;
             _originalLongCutSounds = noteCutSoundEffectManager._longCutEffectsAudioClips;
         }
@@ -63,14 +62,36 @@ namespace SoundReplacer.Patches
         [AffinityPrefix]
         private void GiveMeUntouchedLufs(AdaptiveSfxVolume __instance)
         {
-            FieldAccessor<AdaptiveSfxVolume, float>.Set(__instance, nameof(AdaptiveSfxVolume._minThreshold), float.MinValue);
+            if (_config.CutSoundVolumeMethod == CutSoundVolumeMethod.MomentaryLufs)
+            {
+                FieldAccessor<AdaptiveSfxVolume, float>.Set(__instance, nameof(AdaptiveSfxVolume._minThreshold), float.MinValue);
+            }
         }
 
         [AffinityPatch(typeof(MomentaryLoudnessHistory), nameof(MomentaryLoudnessHistory.Add))]
         [AffinityPrefix]
         private void CaptureResponsiveCutVolume(float momentaryLoudness)
         {
-            _responsiveCutVolume = ToCutVolume(momentaryLoudness);
+            _momentaryCutVolume = ToCutVolume(momentaryLoudness * _config.SfxDecibelMultiplier + _config.SfxDecibelOffset);
+        }
+
+        [AffinityPatch(typeof(AdaptiveSfxVolume), nameof(AdaptiveSfxVolume.OnAudioFilterRead))]
+        [AffinityPrefix]
+        private void CapturePeakCutVolume(float[] data)
+        {
+            if (_config.CutSoundVolumeMethod != CutSoundVolumeMethod.Peak)
+            {
+                return;
+            }
+
+            if (data.Length == 0)
+            {
+                _peakCutVolume = ToCutVolume(0f);
+                return;
+            }
+
+            float percentileAmplitude = _peakPercentileHistogram.EstimateAmplitude(data);
+            _peakCutVolume = ToCutVolume(ReplacerAudioHelpers.NormalizedVolumeToDB(percentileAmplitude));
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.NoteWasCut))]
@@ -106,14 +127,16 @@ namespace SoundReplacer.Patches
 
         private float GetAdjustedLoudnessDb(float loudnessDb)
         {
-            return Mathf.Max(
-                MinCutLoudnessDb,
-                loudnessDb * _config.SfxDecibelMultiplier + _config.SfxDecibelOffset + _config.MusicDecibelOffset - IntrinsicOffset);
+            return Mathf.Clamp(loudnessDb + _config.MusicDecibelOffset, MinCutLoudnessDb, 0);
         }
 
         private float ToCutVolume(float loudnessDb)
             => ReplacerAudioHelpers.DBToNormalizedVolume(GetAdjustedLoudnessDb(loudnessDb));
 
-        private float GetCurrentCutVolume() => _responsiveCutVolume;
+        private float GetCurrentCutVolume() => _config.CutSoundVolumeMethod switch {
+            CutSoundVolumeMethod.MomentaryLufs => _momentaryCutVolume,
+            CutSoundVolumeMethod.Peak => _peakCutVolume,
+            _ => throw new ArgumentOutOfRangeException()
+        };
     }
 }

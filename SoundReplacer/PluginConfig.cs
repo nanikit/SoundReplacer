@@ -17,6 +17,7 @@ namespace SoundReplacer
         public string LevelClearedSound { get; set; } = SoundLoader.DefaultSoundID;
         public string LevelFailedSound { get; set; } = SoundLoader.DefaultSoundID;
         public bool PitchLock { get; set; } = false;
+        public CutSoundVolumeMethod CutSoundVolumeMethod { get; set; } = CutSoundVolumeMethod.MomentaryLufs;
         public float MusicDecibelOffset { get; set; } = 0f;
         public float SfxDecibelOffset { get; set; } = 0f;
         public float SfxDecibelMultiplier { get; set; } = 1f;

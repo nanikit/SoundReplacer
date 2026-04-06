@@ -13,6 +13,9 @@ namespace SoundReplacer.UI
     [HotReload(RelativePathToLayout = "SettingsView.bsml")]
     internal class SettingsViewController : BSMLAutomaticViewController
     {
+        private const string MomentaryLufsOption = "Momentary LUFS";
+        private const string PeakOption = "Peak";
+
         private SongPreviewPlayer _songPreviewPlayer = null!;
         private PluginConfig _config = null!;
         private BasicUIAudioManager _basicUIAudioManager = null!;
@@ -52,6 +55,9 @@ namespace SoundReplacer.UI
 
         [UIValue("sound-list")]
         protected string[] SoundList { get; private set; } = SoundLoader.DefaultSounds;
+
+        [UIValue("cut-sound-volume-methods")]
+        protected string[] CutSoundVolumeMethods { get; } = [MomentaryLufsOption, PeakOption];
 
         [UIValue("good-hitsound")]
         protected string SettingCurrentGoodHitSound
@@ -114,6 +120,23 @@ namespace SoundReplacer.UI
         {
             get => _config.PitchLock;
             set => _config.PitchLock = value;
+        }
+
+        [UIValue("cut-sound-volume-method")]
+        protected string SelectedCutSoundVolumeMethod
+        {
+            get => _config.CutSoundVolumeMethod switch
+            {
+                CutSoundVolumeMethod.MomentaryLufs => MomentaryLufsOption,
+                CutSoundVolumeMethod.Peak => PeakOption,
+                _ => throw new ArgumentOutOfRangeException()
+            };
+            set => _config.CutSoundVolumeMethod = value switch
+            {
+                MomentaryLufsOption => CutSoundVolumeMethod.MomentaryLufs,
+                PeakOption => CutSoundVolumeMethod.Peak,
+                _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
+            };
         }
 
         [UIValue("music-decibel-offset")]
