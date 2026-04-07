@@ -1,5 +1,7 @@
 using System;
 
+namespace SoundReplacer.Logics;
+
 public static class ReplacerAudioHelpers
 {
     public static float NormalizedVolumeToDB(float normalizedVolume)

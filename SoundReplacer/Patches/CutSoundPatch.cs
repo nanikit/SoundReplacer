@@ -1,6 +1,6 @@
 ﻿using IPA.Utilities;
 using SiraUtil.Affinity;
-using SoundReplacer.Helpers;
+using SoundReplacer.Logics;
 using System;
 using UnityEngine;
 using Zenject;

@@ -1,5 +1,6 @@
 using System;
 using SiraUtil.Affinity;
+using SoundReplacer.Logics;
 using UnityEngine;
 
 namespace SoundReplacer.Patches
