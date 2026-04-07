@@ -1,5 +1,4 @@
-﻿using IPA.Utilities;
-using SiraUtil.Affinity;
+﻿using SiraUtil.Affinity;
 using SoundReplacer.Logics;
 using System;
 using UnityEngine;
@@ -20,7 +19,6 @@ namespace SoundReplacer.Patches
         private readonly AudioClip[] _originalShortCutSounds;
         private readonly PeakPercentileHistogram _peakPercentileHistogram = new(128, 0.95f);
 
-        private volatile float _momentaryCutVolume;
         private volatile float _peakCutVolume;
 
         private CutSoundPatch(NoteCutSoundEffectManager noteCutSoundEffectManager, SoundLoader soundLoader, PluginConfig config)
@@ -58,23 +56,6 @@ namespace SoundReplacer.Patches
             _soundLoader.Unload(SoundType.Cut);
         }
 
-        [AffinityPatch(typeof(AdaptiveSfxVolume), nameof(AdaptiveSfxVolume.Start))]
-        [AffinityPrefix]
-        private void GiveMeUntouchedLufs(AdaptiveSfxVolume __instance)
-        {
-            if (_config.CutSoundVolumeMethod == CutSoundVolumeMethod.MomentaryLufs)
-            {
-                FieldAccessor<AdaptiveSfxVolume, float>.Set(__instance, nameof(AdaptiveSfxVolume._minThreshold), float.MinValue);
-            }
-        }
-
-        [AffinityPatch(typeof(MomentaryLoudnessHistory), nameof(MomentaryLoudnessHistory.Add))]
-        [AffinityPrefix]
-        private void CaptureResponsiveCutVolume(float momentaryLoudness)
-        {
-            _momentaryCutVolume = ToCutVolume(momentaryLoudness * _config.SfxDecibelMultiplier + _config.SfxDecibelOffset);
-        }
-
         [AffinityPatch(typeof(AdaptiveSfxVolume), nameof(AdaptiveSfxVolume.OnAudioFilterRead))]
         [AffinityPrefix]
         private void CapturePeakCutVolume(float[] data)
@@ -91,7 +72,9 @@ namespace SoundReplacer.Patches
             }
 
             float percentileAmplitude = _peakPercentileHistogram.EstimateAmplitude(data);
-            _peakCutVolume = ToCutVolume(ReplacerAudioHelpers.NormalizedVolumeToDB(percentileAmplitude));
+            float percentileDb = ReplacerAudioHelpers.NormalizedVolumeToDB(percentileAmplitude);
+            float peakLoudnessDb = percentileDb * _config.SfxDecibelMultiplier + _config.SfxDecibelOffset;
+            _peakCutVolume = ToCutVolume(peakLoudnessDb);
         }
 
         [AffinityPatch(typeof(NoteCutSoundEffect), nameof(NoteCutSoundEffect.NoteWasCut))]
@@ -134,8 +117,8 @@ namespace SoundReplacer.Patches
             => ReplacerAudioHelpers.DBToNormalizedVolume(GetAdjustedLoudnessDb(loudnessDb));
 
         private float GetCurrentCutVolume() => _config.CutSoundVolumeMethod switch {
-            CutSoundVolumeMethod.MomentaryLufs => _momentaryCutVolume,
             CutSoundVolumeMethod.Peak => _peakCutVolume,
+            CutSoundVolumeMethod.Constant => ToCutVolume(_config.ConstantSfxDecibel),
             _ => throw new ArgumentOutOfRangeException()
         };
     }

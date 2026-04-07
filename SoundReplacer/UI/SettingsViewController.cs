@@ -13,8 +13,8 @@ namespace SoundReplacer.UI
     [HotReload(RelativePathToLayout = "SettingsView.bsml")]
     internal class SettingsViewController : BSMLAutomaticViewController
     {
-        private const string MomentaryLufsOption = "Momentary LUFS";
         private const string PeakOption = "Peak";
+        private const string ConstantOption = "Constant";
 
         private SongPreviewPlayer _songPreviewPlayer = null!;
         private PluginConfig _config = null!;
@@ -57,7 +57,7 @@ namespace SoundReplacer.UI
         protected string[] SoundList { get; private set; } = SoundLoader.DefaultSounds;
 
         [UIValue("cut-sound-volume-methods")]
-        protected string[] CutSoundVolumeMethods { get; } = [MomentaryLufsOption, PeakOption];
+        protected string[] CutSoundVolumeMethods { get; } = [PeakOption, ConstantOption];
 
         [UIValue("good-hitsound")]
         protected string SettingCurrentGoodHitSound
@@ -127,17 +127,28 @@ namespace SoundReplacer.UI
         {
             get => _config.CutSoundVolumeMethod switch
             {
-                CutSoundVolumeMethod.MomentaryLufs => MomentaryLufsOption,
                 CutSoundVolumeMethod.Peak => PeakOption,
-                _ => throw new ArgumentOutOfRangeException()
+                CutSoundVolumeMethod.Constant => ConstantOption,
+                _ => PeakOption
             };
-            set => _config.CutSoundVolumeMethod = value switch
+            set
             {
-                MomentaryLufsOption => CutSoundVolumeMethod.MomentaryLufs,
-                PeakOption => CutSoundVolumeMethod.Peak,
-                _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
-            };
+                _config.CutSoundVolumeMethod = value switch
+                {
+                    PeakOption => CutSoundVolumeMethod.Peak,
+                    ConstantOption => CutSoundVolumeMethod.Constant,
+                    _ => throw new ArgumentOutOfRangeException(nameof(value), value, null)
+                };
+                NotifyPropertyChanged(nameof(IsPeakMode));
+                NotifyPropertyChanged(nameof(IsConstantMode));
+            }
         }
+
+        [UIValue("is-peak-mode")]
+        protected bool IsPeakMode => _config.CutSoundVolumeMethod == CutSoundVolumeMethod.Peak;
+
+        [UIValue("is-constant-mode")]
+        protected bool IsConstantMode => _config.CutSoundVolumeMethod == CutSoundVolumeMethod.Constant;
 
         [UIValue("music-decibel-offset")]
         protected float MusicDecibelOffset
@@ -158,6 +169,13 @@ namespace SoundReplacer.UI
         {
             get => _config.SfxDecibelOffset;
             set => _config.SfxDecibelOffset = value;
+        }
+
+        [UIValue("constant-sfx-decibel")]
+        protected float ConstantSfxDecibel
+        {
+            get => _config.ConstantSfxDecibel;
+            set => _config.ConstantSfxDecibel = value;
         }
     }
 }

@@ -9,6 +9,7 @@
   <checkbox-setting value="lock-pitch" text="Lock pitch" apply-on-change="true" bind-value="true" />
   <dropdown-list-setting options="cut-sound-volume-methods" value="cut-sound-volume-method" text="Cut sound volume method" apply-on-change="true" />
   <slider-setting text="Music decibel offset" min="-10" max="10" value="music-decibel-offset" increment="0.5" apply-on-change="true" bind-value="true" />
-  <slider-setting text="Sfx multiplier" min="0" max="3" value="sfx-decibel-multiplier" increment="0.05" apply-on-change="true" bind-value="true" />
-  <slider-setting text="Sfx decibel offset" min="0" max="24" value="sfx-decibel-offset" increment="0.5" apply-on-change="true" bind-value="true" />
+  <slider-setting active="~is-peak-mode" text="Sfx multiplier (Peak)" min="0" max="3" value="sfx-decibel-multiplier" increment="0.05" apply-on-change="true" bind-value="true" />
+  <slider-setting active="~is-peak-mode" text="Sfx decibel offset (Peak)" min="0" max="24" value="sfx-decibel-offset" increment="0.5" apply-on-change="true" bind-value="true" />
+  <slider-setting active="~is-constant-mode" text="Constant sfx decibel" min="-40" max="0" value="constant-sfx-decibel" increment="0.5" apply-on-change="true" bind-value="true" />
 </settings-container>

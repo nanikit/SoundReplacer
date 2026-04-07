@@ -2,7 +2,7 @@ namespace SoundReplacer
 {
     internal enum CutSoundVolumeMethod
     {
-        MomentaryLufs,
-        Peak
+        Peak = 1,
+        Constant = 2
     }
 }

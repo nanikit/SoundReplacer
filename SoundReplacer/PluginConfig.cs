@@ -17,7 +17,8 @@ internal class PluginConfig
     public string LevelClearedSound { get; set; } = SoundLoader.DefaultSoundID;
     public string LevelFailedSound { get; set; } = SoundLoader.DefaultSoundID;
     public bool PitchLock { get; set; } = false;
-    public CutSoundVolumeMethod CutSoundVolumeMethod { get; set; } = CutSoundVolumeMethod.MomentaryLufs;
+    public CutSoundVolumeMethod CutSoundVolumeMethod { get; set; } = CutSoundVolumeMethod.Peak;
+    public float ConstantSfxDecibel { get; set; } = 0f;
     public float MusicDecibelOffset { get; set; } = 0f;
     public float SfxDecibelOffset { get; set; } = 0f;
     public float SfxDecibelMultiplier { get; set; } = 1f;
@@ -28,6 +29,11 @@ internal class PluginConfig
     /// </summary>
     public virtual void OnReload()
     {
+        if (!Enum.IsDefined(typeof(CutSoundVolumeMethod), CutSoundVolumeMethod))
+        {
+            CutSoundVolumeMethod = CutSoundVolumeMethod.Peak;
+        }
+
         OnChanged();
     }
 
